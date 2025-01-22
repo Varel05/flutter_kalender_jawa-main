@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_kalender_jawa/models/pon_data.dart';
 import 'package:intl/intl.dart';
-
 
 class PonMenuScreen extends StatefulWidget {
   const PonMenuScreen({super.key});
@@ -12,48 +10,76 @@ class PonMenuScreen extends StatefulWidget {
 
 class _PonMenuScreenState extends State<PonMenuScreen> {
   DateTime? _selectedDate;
-  String _informasiPon = 'Pilih tanggal untuk melihat informasi Pon.';
+  String _ponInfo = '';
+  List<Map<String, dynamic>> _history = [];
 
-  void _pickDate() async {
-    DateTime? pickedDate = await showDatePicker(
+  String _getPonInfo(DateTime date) {
+    final formatter = DateFormat('EEEE, d MMMM y', 'id_ID');
+    return "Tanggal: ${formatter.format(date)}\nPasaran: Pon\nWeton: Kamis Pon";
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
     );
-
-    setState(() {
-      _selectedDate = pickedDate;
-      _fetchPonData();
-    });
-    }
-
-  void _fetchPonData() {
-    if (_selectedDate != null) {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(_selectedDate!);
-      PonData? pon = PonData.getPonList().firstWhere(
-        (data) => data.tanggal == formattedDate,
-        orElse: () => PonData(tanggal: formattedDate, informasi: "Tidak ada data untuk tanggal ini."),
-      );
+    if (picked != null) {
       setState(() {
-        _informasiPon = pon.informasi;
+        _selectedDate = picked;
+        _ponInfo = _getPonInfo(picked);
+        _history.add({
+          'tanggal': DateFormat('d MMMM y', 'id_ID').format(picked),
+          'info': _ponInfo,
+        });
       });
     }
+  }
+
+  void _deleteHistory(int index) {
+    setState(() {
+      _history.removeAt(index);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Pon')),
+      appBar: AppBar(title: const Text('Pasaran Pon')),
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           ElevatedButton(
-            onPressed: _pickDate,
-            child: Text('Pilih Tanggal'),
+            onPressed: () => _selectDate(context),
+            child: const Text('Pilih Tanggal'),
           ),
-          const SizedBox(height: 20),
-          Text(_informasiPon),
+          if (_selectedDate != null)
+            Card(
+              margin: const EdgeInsets.all(16.0),
+              elevation: 3,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(_ponInfo),
+              ),
+            ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _history.length,
+              itemBuilder: (context, index) {
+                final item = _history[index];
+                return Card(
+                  child: ListTile(
+                    title: Text(item['tanggal']),
+                    subtitle: Text(item['info']),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () => _deleteHistory(index),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );

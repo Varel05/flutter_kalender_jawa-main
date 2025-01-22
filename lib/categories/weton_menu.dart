@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_kalender_jawa/models/weton_data.dart';
 import 'package:intl/intl.dart';
-
 
 class WetonMenuScreen extends StatefulWidget {
   const WetonMenuScreen({super.key});
@@ -12,48 +10,76 @@ class WetonMenuScreen extends StatefulWidget {
 
 class _WetonMenuScreenState extends State<WetonMenuScreen> {
   DateTime? _selectedDate;
-  String _informasiWeton = 'Pilih tanggal untuk melihat informasi Weton.';
+  String _wetonInfo = '';
+  List<Map<String, dynamic>> _history = [];
 
-  void _pickDate() async {
-    DateTime? pickedDate = await showDatePicker(
+  String _getWetonInfo(DateTime date) {
+    final formatter = DateFormat('EEEE, d MMMM y', 'id_ID');
+    return "Tanggal: ${formatter.format(date)}\nWeton: Minggu Kliwon";
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
     );
-
-    setState(() {
-      _selectedDate = pickedDate;
-      _fetchWetonData();
-    });
-    }
-
-  void _fetchWetonData() {
-    if (_selectedDate != null) {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(_selectedDate!);
-      WetonData? weton = WetonData.getWetonList().firstWhere(
-        (data) => data.tanggal == formattedDate,
-        orElse: () => WetonData(tanggal: formattedDate, informasi: "Tidak ada data untuk tanggal ini."),
-      );
+    if (picked != null) {
       setState(() {
-        _informasiWeton = weton.informasi;
+        _selectedDate = picked;
+        _wetonInfo = _getWetonInfo(picked);
+        _history.add({
+          'tanggal': DateFormat('d MMMM y', 'id_ID').format(picked),
+          'info': _wetonInfo,
+        });
       });
     }
+  }
+
+  void _deleteHistory(int index) {
+    setState(() {
+      _history.removeAt(index);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Weton')),
+      appBar: AppBar(title: const Text('Weton')),
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           ElevatedButton(
-            onPressed: _pickDate,
-            child: Text('Pilih Tanggal'),
+            onPressed: () => _selectDate(context),
+            child: const Text('Pilih Tanggal'),
           ),
-          const SizedBox(height: 20),
-          Text(_informasiWeton),
+          if (_selectedDate != null)
+            Card(
+              margin: const EdgeInsets.all(16.0),
+              elevation: 3,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(_wetonInfo),
+              ),
+            ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _history.length,
+              itemBuilder: (context, index) {
+                final item = _history[index];
+                return Card(
+                  child: ListTile(
+                    title: Text(item['tanggal']),
+                    subtitle: Text(item['info']),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () => _deleteHistory(index),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
