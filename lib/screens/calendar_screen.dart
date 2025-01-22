@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../models/javanese_date_converter.dart'; // Import file logika
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -10,12 +11,32 @@ class CalendarScreen extends StatefulWidget {
 
 class _CalendarScreenState extends State<CalendarScreen> {
   DateTime? selectedDate;
-  String javaneseCalendarInfo = "";
-  // Fungsi simulasi kalender info
-  String getJavaneseCalendarInfo(DateTime date) {
-    // Replace this with actual Javanese calendar calculation logic
-    final formatter = DateFormat('EEEE, d MMMM y');
-    return "Tanggal: ${formatter.format(date)}\nPasaran: Legi\nWeton: Selasa Pon";
+  String javaneseCalendarInfo = "Belum ada data";
+
+  // Fungsi untuk mendapatkan informasi kalender Jawa
+  Future<void> fetchJavaneseCalendarInfo(DateTime date) async {
+    try {
+      debugPrint("Mengonversi tanggal: $date");
+      // Simulasi logika JavaneseDateConverter
+      final javaneseDate = await JavaneseDateConverter.convertToJavaneseDate(date);
+
+      // Format tanggal Masehi
+      final formatter = DateFormat('EEEE, d MMMM y', 'id');
+      final formattedDate = formatter.format(date);
+
+      setState(() {
+        javaneseCalendarInfo = "Tanggal Masehi: $formattedDate\n"
+            "Tanggal Jawa: ${javaneseDate['tanggal']} ${javaneseDate['bulan']} ${javaneseDate['tahun']}\n"
+            "Hari Pasaran: ${javaneseDate['pasaran']}";
+      });
+
+      debugPrint("Hasil Konversi: $javaneseCalendarInfo");
+    } catch (e) {
+      setState(() {
+        javaneseCalendarInfo = "Terjadi kesalahan saat mengonversi tanggal: $e";
+      });
+      debugPrint("Error: $e");
+    }
   }
 
   // Picker Tanggal
@@ -26,11 +47,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
       firstDate: DateTime(1900),
       lastDate: DateTime(2100),
     );
-    if (picked != null && picked != selectedDate) {
+    if (picked != null) {
       setState(() {
         selectedDate = picked;
-        javaneseCalendarInfo = getJavaneseCalendarInfo(picked);
+        javaneseCalendarInfo = "Mengonversi data...";
       });
+      await fetchJavaneseCalendarInfo(picked); // Panggil fungsi konversi
     }
   }
 
@@ -40,7 +62,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       children: [
         // Background Image
         Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             image: DecorationImage(
               image: AssetImage('assets/images/bg1.png'),
               fit: BoxFit.cover,
@@ -53,12 +75,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             leading: IconButton(
-              icon: Icon(Icons.arrow_back),
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
               onPressed: () {
                 Navigator.pop(context);
               },
             ),
-            title: Text('Kalender Jawa', style: TextStyle(color: Colors.white)),
+            title: const Text(
+              'Kalender Jawa',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
           body: Column(
             children: [
@@ -84,7 +109,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       Center(
                         child: Text(
                           'Pilih Tanggal',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
@@ -103,55 +128,44 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             selectedDate == null
                                 ? 'Pilih Tanggal'
                                 : 'Ubah Tanggal',
-                            style: TextStyle(color: Colors.white),
+                            style: const TextStyle(color: Colors.white),
                           ),
                         ),
                       ),
                       const SizedBox(height: 30),
-                      selectedDate != null
-                          ? Card(
-                              elevation: 3,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Informasi Kalender Jawa',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      javaneseCalendarInfo,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.grey.shade800,
-                                      ),
-                                    ),
-                                  ],
+                      Card(
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Informasi Kalender Jawa',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            )
-                          : Center(
-                              child: Text(
-                                'Silakan pilih tanggal untuk melihat kalender Jawa.',
+                              const SizedBox(height: 8),
+                              Text(
+                                javaneseCalendarInfo,
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: Colors.grey,
+                                  color: Colors.grey.shade800,
                                 ),
                               ),
-                            ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
-              // End Container
             ],
           ),
         ),
