@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../helpers/javanese_date_converter.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -10,9 +11,35 @@ class CalendarScreen extends StatefulWidget {
 
 class _CalendarScreenState extends State<CalendarScreen> {
   DateTime? selectedDate;
-  String javaneseCalendarInfo = "Silakan pilih tanggal untuk melihat kalender Jawa.";
+  String javaneseCalendarInfo = "Belum ada data";
 
-  // Fungsi untuk memilih tanggal dan mendapatkan informasi kalender Jawa
+  // Fungsi untuk mendapatkan informasi kalender Jawa
+  Future<void> fetchJavaneseCalendarInfo(DateTime date) async {
+    try {
+      debugPrint("Mengonversi tanggal: $date");
+      // Simulasi logika JavaneseDateConverter
+      final javaneseDate = await JavaneseDateConverter.convertToJavaneseDate(date);
+
+      // Format tanggal Masehi
+      final formatter = DateFormat('EEEE, d MMMM y', 'id');
+      final formattedDate = formatter.format(date);
+
+      setState(() {
+        javaneseCalendarInfo = "Tanggal Masehi: $formattedDate\n"
+            "Tanggal Jawa: ${javaneseDate['tanggal']} ${javaneseDate['bulan']} ${javaneseDate['tahun']}\n"
+            "Hari Pasaran: ${javaneseDate['pasaran']}";
+      });
+
+      debugPrint("Hasil Konversi: $javaneseCalendarInfo");
+    } catch (e) {
+      setState(() {
+        javaneseCalendarInfo = "Terjadi kesalahan saat mengonversi tanggal: $e";
+      });
+      debugPrint("Error: $e");
+    }
+  }
+
+  // Picker Tanggal
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -23,18 +50,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
     if (picked != null) {
       setState(() {
         selectedDate = picked;
-        javaneseCalendarInfo = "Memuat informasi...";
+        javaneseCalendarInfo = "Mengonversi data...";
       });
-
-      // Ambil informasi kalender Jawa
-      final javaneseDate = await JavaneseDateConverter.convertToJavaneseDate(picked);
-      setState(() {
-        javaneseCalendarInfo = """
-Tanggal Masehi: ${javaneseDate["masehi"]}
-Tanggal Jawa: ${javaneseDate["tanggal"]} ${javaneseDate["bulan"]} ${javaneseDate["tahun"]}
-Pasaran: ${javaneseDate["pasaran"]}
-        """;
-      });
+      await fetchJavaneseCalendarInfo(picked); // Panggil fungsi konversi
     }
   }
 
@@ -42,6 +60,7 @@ Pasaran: ${javaneseDate["pasaran"]}
   Widget build(BuildContext context) {
     return Stack(
       children: [
+        // Background Image
         Container(
           decoration: const BoxDecoration(
             image: DecorationImage(
@@ -56,7 +75,7 @@ Pasaran: ${javaneseDate["pasaran"]}
             backgroundColor: Colors.transparent,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
               onPressed: () {
                 Navigator.pop(context);
               },
@@ -72,10 +91,11 @@ Pasaran: ${javaneseDate["pasaran"]}
                 flex: 1,
                 child: SizedBox(),
               ),
+              // White Container
               Expanded(
                 flex: 7,
                 child: Container(
-                  padding: const EdgeInsets.all(25.0),
+                  padding: const EdgeInsets.fromLTRB(25.0, 50.0, 25.0, 20.0),
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.only(
@@ -89,7 +109,7 @@ Pasaran: ${javaneseDate["pasaran"]}
                       Center(
                         child: Text(
                           'Pilih Tanggal',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
@@ -120,12 +140,25 @@ Pasaran: ${javaneseDate["pasaran"]}
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
-                          child: Text(
-                            javaneseCalendarInfo,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey.shade800,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Informasi Kalender Jawa',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                javaneseCalendarInfo,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey.shade800,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),

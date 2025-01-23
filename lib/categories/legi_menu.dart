@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import '../helpers/javanese_date_converter.dart';
 
 class LegiMenuScreen extends StatefulWidget {
   const LegiMenuScreen({super.key});
@@ -9,14 +9,20 @@ class LegiMenuScreen extends StatefulWidget {
 }
 
 class _LegiMenuScreenState extends State<LegiMenuScreen> {
-  DateTime? _selectedDate;
-  String _javaneseCalendarInfo = '';
-  List<Map<String, dynamic>> _history = [];
+  DateTime? selectedDate;
+  Map<String, String>? javaneseDateInfo;
+  List<Map<String, String>> history = [];
 
-  // Fungsi simulasi info kalender Jawa
-  String _getJavaneseCalendarInfo(DateTime date) {
-    final formatter = DateFormat('EEEE, d MMMM y', 'id_ID');
-    return "Tanggal: ${formatter.format(date)}\nPasaran: Legi\nWeton: Selasa Pon";
+  // Fungsi untuk mendapatkan informasi kalender Jawa secara asinkron
+  Future<void> _getJavaneseCalendarInfo(DateTime date) async {
+    final result = await JavaneseDateConverter.convertToJavaneseDate(date);
+    setState(() {
+      javaneseDateInfo = result;
+      history.add({
+        'tanggal': result['masehi']!,
+        'info': "${result['pasaran']} ${result['tanggal']} ${result['bulan']} ${result['tahun']}",
+      });
+    });
   }
 
   // Fungsi untuk memilih tanggal
@@ -28,26 +34,19 @@ class _LegiMenuScreenState extends State<LegiMenuScreen> {
       lastDate: DateTime(2100),
     );
     if (picked != null) {
-      setState(() {
-        _selectedDate = picked;
-        _javaneseCalendarInfo = _getJavaneseCalendarInfo(picked);
-        _history.add({
-          'tanggal': DateFormat('d MMMM y', 'id_ID').format(picked),
-          'info': _javaneseCalendarInfo,
-        });
-      });
+      await _getJavaneseCalendarInfo(picked);
     }
   }
 
   // Fungsi untuk menghapus histori
   void _deleteHistory(int index) {
     setState(() {
-      _history.removeAt(index);
+      history.removeAt(index);
     });
   }
 
   // Fungsi untuk mengedit histori
-  void _editHistory(int index) async {
+  Future<void> _editHistory(int index) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -55,11 +54,11 @@ class _LegiMenuScreenState extends State<LegiMenuScreen> {
       lastDate: DateTime(2100),
     );
     if (picked != null) {
+      final result = await JavaneseDateConverter.convertToJavaneseDate(picked);
       setState(() {
-        final infoBaru = _getJavaneseCalendarInfo(picked);
-        _history[index] = {
-          'tanggal': DateFormat('d MMMM y', 'id_ID').format(picked),
-          'info': infoBaru,
+        history[index] = {
+          'tanggal': result['masehi']!,
+          'info': "${result['pasaran']} ${result['tanggal']} ${result['bulan']} ${result['tahun']}",
         };
       });
     }
@@ -77,7 +76,7 @@ class _LegiMenuScreenState extends State<LegiMenuScreen> {
             child: const Text('Pilih Tanggal'),
           ),
           const SizedBox(height: 20),
-          if (_selectedDate != null)
+          if (javaneseDateInfo != null)
             Card(
               elevation: 3,
               shape: RoundedRectangleBorder(
@@ -97,7 +96,7 @@ class _LegiMenuScreenState extends State<LegiMenuScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _javaneseCalendarInfo,
+                      "${javaneseDateInfo!['pasaran']} ${javaneseDateInfo!['tanggal']} ${javaneseDateInfo!['bulan']} ${javaneseDateInfo!['tahun']}",
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey.shade800,
@@ -115,16 +114,16 @@ class _LegiMenuScreenState extends State<LegiMenuScreen> {
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: _history.length,
+              itemCount: history.length,
               itemBuilder: (context, index) {
-                final item = _history[index];
+                final item = history[index];
                 return Card(
                   elevation: 2,
                   margin: const EdgeInsets.symmetric(
                       vertical: 8.0, horizontal: 12.0),
                   child: ListTile(
-                    title: Text(item['tanggal']),
-                    subtitle: Text(item['info']),
+                    title: Text(item['tanggal']!),
+                    subtitle: Text(item['info']!),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
