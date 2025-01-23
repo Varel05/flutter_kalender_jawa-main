@@ -5,8 +5,9 @@ import 'package:flutter_kalender_jawa/theme/theme.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
+  // Inisialisasi date formatting lokal
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('id_ID', null);
+  await initializeDateFormatting('id_ID');
   runApp(const MyApp());
 }
 

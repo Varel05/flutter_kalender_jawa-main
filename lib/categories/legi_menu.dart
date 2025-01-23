@@ -12,7 +12,20 @@ class _LegiMenuScreenState extends State<LegiMenuScreen> {
   DateTime? selectedDate;
   Map<String, String>? javaneseDateInfo;
   List<Map<String, String>> history = [];
+  DateTime? selectedDate;
+  Map<String, String>? javaneseDateInfo;
+  List<Map<String, String>> history = [];
 
+  // Fungsi untuk mendapatkan informasi kalender Jawa secara asinkron
+  Future<void> _getJavaneseCalendarInfo(DateTime date) async {
+    final result = await JavaneseDateConverter.convertToJavaneseDate(date);
+    setState(() {
+      javaneseDateInfo = result;
+      history.add({
+        'tanggal': result['masehi']!,
+        'info': "${result['pasaran']} ${result['tanggal']} ${result['bulan']} ${result['tahun']}",
+      });
+    });
   // Fungsi untuk mendapatkan informasi kalender Jawa secara asinkron
   Future<void> _getJavaneseCalendarInfo(DateTime date) async {
     final result = await JavaneseDateConverter.convertToJavaneseDate(date);
@@ -35,6 +48,7 @@ class _LegiMenuScreenState extends State<LegiMenuScreen> {
     );
     if (picked != null) {
       await _getJavaneseCalendarInfo(picked);
+      await _getJavaneseCalendarInfo(picked);
     }
   }
 
@@ -42,10 +56,12 @@ class _LegiMenuScreenState extends State<LegiMenuScreen> {
   void _deleteHistory(int index) {
     setState(() {
       history.removeAt(index);
+      history.removeAt(index);
     });
   }
 
   // Fungsi untuk mengedit histori
+  Future<void> _editHistory(int index) async {
   Future<void> _editHistory(int index) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -55,7 +71,11 @@ class _LegiMenuScreenState extends State<LegiMenuScreen> {
     );
     if (picked != null) {
       final result = await JavaneseDateConverter.convertToJavaneseDate(picked);
+      final result = await JavaneseDateConverter.convertToJavaneseDate(picked);
       setState(() {
+        history[index] = {
+          'tanggal': result['masehi']!,
+          'info': "${result['pasaran']} ${result['tanggal']} ${result['bulan']} ${result['tahun']}",
         history[index] = {
           'tanggal': result['masehi']!,
           'info': "${result['pasaran']} ${result['tanggal']} ${result['bulan']} ${result['tahun']}",
@@ -77,6 +97,7 @@ class _LegiMenuScreenState extends State<LegiMenuScreen> {
           ),
           const SizedBox(height: 20),
           if (javaneseDateInfo != null)
+          if (javaneseDateInfo != null)
             Card(
               elevation: 3,
               shape: RoundedRectangleBorder(
@@ -97,6 +118,7 @@ class _LegiMenuScreenState extends State<LegiMenuScreen> {
                     const SizedBox(height: 8),
                     Text(
                       "${javaneseDateInfo!['pasaran']} ${javaneseDateInfo!['tanggal']} ${javaneseDateInfo!['bulan']} ${javaneseDateInfo!['tahun']}",
+                      "${javaneseDateInfo!['pasaran']} ${javaneseDateInfo!['tanggal']} ${javaneseDateInfo!['bulan']} ${javaneseDateInfo!['tahun']}",
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey.shade800,
@@ -115,13 +137,17 @@ class _LegiMenuScreenState extends State<LegiMenuScreen> {
           Expanded(
             child: ListView.builder(
               itemCount: history.length,
+              itemCount: history.length,
               itemBuilder: (context, index) {
+                final item = history[index];
                 final item = history[index];
                 return Card(
                   elevation: 2,
                   margin: const EdgeInsets.symmetric(
                       vertical: 8.0, horizontal: 12.0),
                   child: ListTile(
+                    title: Text(item['tanggal']!),
+                    subtitle: Text(item['info']!),
                     title: Text(item['tanggal']!),
                     subtitle: Text(item['info']!),
                     trailing: Row(
